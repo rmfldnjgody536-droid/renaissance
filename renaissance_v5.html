@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>큐레이터가 되어보자! - 르네상스 미술 전시관</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Song+Myung&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --burgundy:#5E1220;
+    --burgundy-dark:#3A0B12;
+    --burgundy-light:#8C2233;
+    --gold:#C9A227;
+    --gold-light:#E9D48F;
+    --gold-dark:#8A6C16;
+    --marble:#EFEAE0;
+    --ink:#2A2118;
+    --cream:#F7F1E3;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Nanum Myeongjo', serif;
+    color:var(--ink);
+    background:var(--burgundy-dark);
+    overflow-x:hidden;
+  }
+  .screen{display:none; min-height:100vh; width:100%;}
+  .screen.active{display:block;}
+  button{
+    font-family:'Nanum Myeongjo', serif;
+    cursor:pointer;
+    border:none;
+    background:none;
+  }
+
+  /* ---------- 버튼 ---------- */
+  .gold-btn{
+    padding:14px 40px;
+    font-size:18px;
+    letter-spacing:2px;
+    color:var(--cream);
+    background:linear-gradient(180deg, var(--burgundy-light), var(--burgundy) 60%, var(--burgundy-dark));
+    border:1px solid var(--gold);
+    border-radius:2px;
+    box-shadow:0 0 0 1px rgba(201,162,39,.35) inset, 0 6px 14px rgba(0,0,0,.35);
+  }
+  .gold-btn:hover{ transform:translateY(-1px); }
+  .ghost-btn{
+    padding:12px 28px;
+    font-size:15px;
+    color:var(--gold-dark);
+    background:var(--cream);
+    border:1px solid var(--gold-dark);
+  }
+  
+  /* 삭제 전용 버튼 스타일 */
+  .delete-btn{
+    margin-top: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #fff;
+    background: #8C2233;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .delete-btn:hover{
+    background: #5E1220;
+  }
+  .clear-all-btn{
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #fff;
+    background: #5E1220;
+    border: 1px solid #C9A227;
+    margin-right: 10px;
+  }
+
+  /* ---------- 1. 랜딩 화면 ---------- */
+  #screen-landing{
+    display:none;
+    align-items:center;justify-content:center;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(140,34,51,.55), transparent 60%),
+      var(--burgundy-dark);
+    position:relative;
+  }
+  #screen-landing.active{ display:flex; }
+  .landing-frame{
+    max-width:640px;
+    margin:60px 24px;
+    padding:56px 44px;
+    text-align:center;
+    border:1px solid rgba(201,162,39,.5);
+    background:rgba(58,11,18,.35);
+  }
+  .landing-title{
+    font-family:'Song Myung', serif;
+    font-size:44px;
+    color:var(--gold-light);
+    margin:0 0 28px;
+  }
+  .landing-desc{
+    color:var(--cream);
+    font-size:17px;
+    line-height:1.9;
+    margin:0 0 36px;
+    text-align:left;
+    word-break:keep-all;
+  }
+  .landing-footer-link{
+    margin-top:28px;
+    font-size:13px;
+    color:rgba(247,241,227,.55);
+    text-decoration:underline;
+    display:inline-block;
+    cursor:pointer;
+  }
+
+  /* ---------- 2 & 3. 정보 입력 / 업로드 화면 ---------- */
+  .paper-screen{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background: var(--marble);
+    padding:32px 16px;
+  }
+  .card{
+    width:100%;
+    max-width:520px;
+    background:var(--cream);
+    border:1px solid var(--gold-dark);
+    padding:40px 36px;
+  }
+  .card h2{
+    font-family:'Song Myung', serif;
+    font-size:26px;
+    color:var(--burgundy);
+    margin:0 0 8px;
+  }
+  .card .sub{ font-size:14px; color:#6b5f4d; margin:0 0 28px; }
+  .field{margin-bottom:20px;}
+  .field label{ display:block; font-size:14px; color:var(--burgundy); margin-bottom:6px; }
+  .field select, .field input[type=text]{
+    width:100%; padding:11px 12px; font-size:16px;
+    border:1px solid #c9bfa6; background:#fff;
+  }
+
+  /* ---------- 업로드 ---------- */
+  #screen-upload .card{ max-width:560px; }
+  .upload-box{
+    width:100%; 
+    max-width:420px; 
+    margin:0 auto 18px;
+    min-height:200px;
+    background:#fff; 
+    border:2px dashed #c9bfa6;
+    display:flex;align-items:center;justify-content:center; 
+    position:relative;
+    cursor:pointer;
+  }
+  .upload-box img{ 
+    width:100%; 
+    height:auto; 
+    display:block; 
+    object-fit:contain; 
+  }
+  .upload-plus{
+    width:56px;height:56px; border-radius:50%;
+    background:var(--burgundy); color:var(--cream); font-size:30px;
+  }
+  #fileInput{ display:none; }
+  .desc-box textarea{
+    width:100%; min-height:150px; padding:14px;
+    border:1px solid #c9bfa6; background:#fff; font-size:15px;
+  }
+
+  /* ---------- 갤러리 화면 ---------- */
+  #screen-gallery, #screen-archive-view{
+    background:var(--marble);
+    min-height:100vh;
+    position:relative;
+  }
+  .gallery-topbar{
+    position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px;
+    background:var(--burgundy-dark);
+    color:var(--gold-light);
+  }
+  .gallery-viewport{
+    position:relative;
+    height:calc(100vh - 55px);
+    overflow:hidden;
+    background: linear-gradient(180deg, #f7f3eb 0%, #e8e0d0 100%);
+  }
+
+  /* 커튼 오버레이 (SVG) */
+  .curtain-svg-overlay{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; z-index:50;
+  }
+
+  .gallery-scroll{
+    height:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    display:flex;
+    align-items:center;
+    gap:80px;
+    padding:0 260px;
+    scroll-behavior:smooth;
+    z-index:30;
+    position:relative;
+  }
+  .empty-gallery-msg{
+    color:var(--burgundy); font-size:20px; text-align:center; width:100%;
+    font-weight:bold;
+  }
+
+  /* ---------- 액자 디자인 ---------- */
+  .artwork{
+    flex:0 0 auto;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  
+  .classic-frame{
+    position:relative;
+    padding:20px;
+    background: linear-gradient(135deg, #d4af37 0%, #aa7c11 40%, #5b4006 50%, #aa7c11 60%, #ffd700 100%);
+    border-radius:4px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.6);
+    border: 2px solid #5b4006;
+  }
+  .classic-frame-inner{
+    padding:12px;
+    background: #2a1a08;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .classic-frame-inner img{
+    display:block;
+    max-height:50vh;
+    width:auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+
+  .artwork-caption{
+    margin-top:20px;
+    text-align:center;
+    max-width:320px;
+    background: rgba(247, 241, 227, 0.95);
+    padding: 12px 18px;
+    border: 1px solid var(--gold-dark);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .artwork-name{
+    font-family:'Song Myung', serif;
+    font-size:16px;
+    color:var(--burgundy);
+    font-weight:bold;
+  }
+  .artwork-desc{
+    font-size:13px;
+    line-height:1.6;
+    color:var(--ink);
+    margin-top:6px;
+    text-align:left;
+  }
+
+  /* ---------- 교사용 반 선택 ---------- */
+  #screen-archive{
+    min-height:100vh; background:var(--burgundy-dark);
+    display:flex; align-items:center; justify-content:center; padding:32px 16px;
+  }
+  .archive-card{
+    background:var(--cream); border:1px solid var(--gold-dark);
+    padding:44px 40px; text-align:center; max-width:480px; width:100%;
+  }
+  .class-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:20px; }
+  .class-grid button{
+    padding:16px 0; font-size:16px; background:var(--burgundy);
+    color:var(--cream); border:1px solid var(--gold); cursor:pointer;
+  }
+  .class-grid button:hover{
+    background:var(--burgundy-light);
+  }
+
+  .back-link{
+    position:fixed; top:16px; left:16px; z-index:110;
+    font-size:13px; padding:8px 16px; background:rgba(42,33,24,.8); color:#fff;
+  }
+</style>
+</head>
+<body>
+
+<!-- 1. 랜딩 화면 -->
+<section id="screen-landing" class="screen active">
+  <div class="landing-frame">
+    <h1 class="landing-title">큐레이터가 되어보자!</h1>
+    <p class="landing-desc">
+      이번 활동은 르네상스 시기에 제작된 다양한 미술 작품을 살펴보는 것을 목적으로 하고 있습니다. 인터넷 검색을 통해 르네상스 시기의 미술 작품들에 대해 알아본 뒤, 가장 마음에 드는 작품을 하나 골라 주세요. 해당 작품의 이미지를 다운로드받아 이 사이트에 업로드하고 작품에 대한 설명을 5문장 이상 작성해 주세요.
+    </p>
+    <button type="button" class="gold-btn" id="btn-start">시작</button>
+    <div>
+      <a class="landing-footer-link" id="link-archive">전체 갤러리 모아보기 (교사용)</a>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 정보 입력 화면 -->
+<section id="screen-info" class="screen">
+  <button type="button" class="back-link" data-goto="screen-landing">← 처음으로</button>
+  <div class="paper-screen">
+    <div class="card">
+      <h2>내 정보 입력</h2>
+      <p class="sub">전시관에 작품을 걸기 전 정보를 입력해주세요.</p>
+      <div class="field">
+        <label>반</label>
+        <select id="input-class">
+          <option value="">반을 선택하세요</option>
+          <option value="1">1반</option>
+          <option value="2">2반</option>
+          <option value="3">3반</option>
+          <option value="4">4반</option>
+          <option value="5">5반</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>번호</label>
+        <input type="text" id="input-number" placeholder="예) 1">
+      </div>
+      <div class="field">
+        <label>이름</label>
+        <input type="text" id="input-name" placeholder="이름을 입력하세요">
+      </div>
+      <div style="text-align:center;">
+        <button type="button" class="gold-btn" id="btn-goto-upload">다음으로</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 업로드 화면 -->
+<section id="screen-upload" class="screen">
+  <button type="button" class="back-link" data-goto="screen-info">← 다시 입력</button>
+  <div class="paper-screen">
+    <div class="card">
+      <h2 id="upload-heading">작품 등록하기</h2>
+      <p class="sub">작품 이미지 업로드 및 5문장 이상 설명 작성</p>
+
+      <div class="upload-box" id="upload-box">
+        <button type="button" class="upload-plus" id="btn-upload-plus">+</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+
+      <div class="desc-box">
+        <textarea id="input-desc" placeholder="작품 설명 (5문장 이상)"></textarea>
+        <p id="desc-counter" style="font-size:12px; text-align:right;">작성한 문장 수: 0</p>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+        <button type="button" class="gold-btn" id="btn-save">저장</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 학생 갤러리 화면 -->
+<section id="screen-gallery" class="screen">
+  <div class="gallery-topbar">
+    <span class="g-title" id="gallery-title">전시관</span>
+    <div>
+      <button type="button" class="clear-all-btn" id="btn-clear-current">이 반 전체 삭제</button>
+      <button type="button" class="ghost-btn" data-goto="screen-landing" style="padding:6px 12px; font-size:12px;">처음으로</button>
+    </div>
+  </div>
+  <div class="gallery-viewport">
+    <svg class="curtain-svg-overlay" viewBox="0 0 1000 600" preserveAspectRatio="none">
+      <path d="M 0,0 L 1000,0 L 1000,120 Q 800,40 500,110 Q 200,40 0,120 Z" fill="#3A0B12" />
+      <path d="M 0,0 L 1000,0 L 1000,100 Q 800,20 500,90 Q 200,20 0,100 Z" fill="#5E1220" />
+      <path d="M 0,0 Q 80,150 140,600 L 0,600 Z" fill="#5E1220" />
+      <path d="M 0,0 Q 60,150 100,600 L 0,600 Z" fill="#3A0B12" />
+      <path d="M 1000,0 Q 920,150 860,600 L 1000,600 Z" fill="#5E1220" />
+      <path d="M 1000,0 Q 940,150 900,600 L 1000,600 Z" fill="#3A0B12" />
+      <path d="M 0,100 Q 200,20 500,90 Q 800,20 1000,100" fill="none" stroke="#C9A227" stroke-width="6" />
+    </svg>
+    <div class="gallery-scroll" id="gallery-scroll"></div>
+  </div>
+</section>
+
+<!-- 교사용: 반 선택 -->
+<section id="screen-archive" class="screen">
+  <button type="button" class="back-link" data-goto="screen-landing">← 처음으로</button>
+  <div class="archive-card">
+    <h2>어느 반의 전시관을 볼까요?</h2>
+    <div class="class-grid">
+      <button type="button" class="btn-class-select" data-class="1">1반</button>
+      <button type="button" class="btn-class-select" data-class="2">2반</button>
+      <button type="button" class="btn-class-select" data-class="3">3반</button>
+      <button type="button" class="btn-class-select" data-class="4">4반</button>
+      <button type="button" class="btn-class-select" data-class="5">5반</button>
+    </div>
+  </div>
+</section>
+
+<!-- 교사용: 선택된 반 갤러리 -->
+<section id="screen-archive-view" class="screen">
+  <div class="gallery-topbar">
+    <span class="g-title" id="archive-gallery-title">전시관</span>
+    <div>
+      <button type="button" class="clear-all-btn" id="btn-clear-archive">이 반 전체 삭제</button>
+      <button type="button" class="ghost-btn" data-goto="screen-archive" style="padding:6px 12px; font-size:12px;">반 다시 고르기</button>
+    </div>
+  </div>
+  <div class="gallery-viewport">
+    <svg class="curtain-svg-overlay" viewBox="0 0 1000 600" preserveAspectRatio="none">
+      <path d="M 0,0 L 1000,0 L 1000,120 Q 800,40 500,110 Q 200,40 0,120 Z" fill="#3A0B12" />
+      <path d="M 0,0 L 1000,0 L 1000,100 Q 800,20 500,90 Q 200,20 0,100 Z" fill="#5E1220" />
+      <path d="M 0,0 Q 80,150 140,600 L 0,600 Z" fill="#5E1220" />
+      <path d="M 0,0 Q 60,150 100,600 L 0,600 Z" fill="#3A0B12" />
+      <path d="M 1000,0 Q 920,150 860,600 L 1000,600 Z" fill="#5E1220" />
+      <path d="M 1000,0 Q 940,150 900,600 L 1000,600 Z" fill="#3A0B12" />
+      <path d="M 0,100 Q 200,20 500,90 Q 800,20 1000,100" fill="none" stroke="#C9A227" stroke-width="6" />
+    </svg>
+    <div class="gallery-scroll" id="archive-gallery-scroll"></div>
+  </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script>
+// Firebase 설정
+var firebaseConfig = {
+  apiKey: "AIzaSyA4DvtEqxrr5WzNkskwbQjWST-6I1Oixhk",
+  authDomain: "renaissance-1f2fc.firebaseapp.com",
+  databaseURL: "https://renaissance-1f2fc-default-rtdb.firebaseio.com",
+  projectId: "renaissance-1f2fc",
+  storageBucket: "renaissance-1f2fc.firebasestorage.app",
+  messagingSenderId: "593005833476",
+  appId: "1:593005833476:web:95c4a258d214bddd8bf451",
+  measurementId: "G-VLT4T4KT08"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+var db = firebase.firestore();
+var storage = firebase.storage();
+
+var activeViewClass = null;
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function openArchiveClass(classNum){
+  activeViewClass = String(classNum);
+  document.getElementById("archive-gallery-title").textContent = activeViewClass + "반 전시관";
+  showScreen("screen-archive-view");
+  renderGallery("archive-gallery-scroll", activeViewClass);
+}
+
+async function renderGallery(containerId, classNum){
+  var container = document.getElementById(containerId);
+  container.innerHTML = '<div class="empty-gallery-msg">작품을 불러오는 중입니다...</div>';
+
+  try {
+    var snap = await db.collection("artworks").where("classNum", "==", String(classNum)).get();
+    var list = [];
+    snap.forEach(function(doc){
+      var data = doc.data();
+      data.id = doc.id;
+      list.push(data);
+    });
+
+    container.innerHTML = "";
+    if(list.length === 0){
+      container.innerHTML = '<div class="empty-gallery-msg">아직 전시된 작품이 없습니다.</div>';
+      return;
+    }
+
+    list.sort(function(a, b){ return Number(a.number) - Number(b.number); });
+
+    list.forEach(function(entry){
+      var art = document.createElement("div");
+      art.className = "artwork";
+
+      var frame = document.createElement("div");
+      frame.className = "classic-frame";
+      var inner = document.createElement("div");
+      inner.className = "classic-frame-inner";
+      var img = document.createElement("img");
+      img.src = entry.imageUrl || entry.imageData || "";
+      img.alt = entry.number + "번 " + entry.name + "의 작품";
+      inner.appendChild(img);
+      frame.appendChild(inner);
+
+      var caption = document.createElement("div");
+      caption.className = "artwork-caption";
+      var nameDiv = document.createElement("div");
+      nameDiv.className = "artwork-name";
+      nameDiv.textContent = entry.number + "번 " + entry.name;
+      var descDiv = document.createElement("div");
+      descDiv.className = "artwork-desc";
+      descDiv.textContent = entry.desc;
+      var deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "delete-btn";
+      deleteBtn.textContent = "작품 삭제";
+      deleteBtn.addEventListener("click", function(){ deleteArtwork(classNum, entry.id); });
+
+      caption.appendChild(nameDiv);
+      caption.appendChild(descDiv);
+      caption.appendChild(deleteBtn);
+      art.appendChild(frame);
+      art.appendChild(caption);
+      container.appendChild(art);
+    });
+  } catch(e) {
+    console.error(e);
+    container.innerHTML = '<div class="empty-gallery-msg">작품을 불러오지 못했습니다. Firebase 설정과 인터넷 연결을 확인해 주세요.</div>';
+  }
+}
+
+async function deleteArtwork(classNum, id){
+  if(!confirm("이 작품을 삭제하시겠습니까?")) return;
+  try {
+    var artworkRef = db.collection("artworks").doc(String(id));
+    var artworkSnap = await artworkRef.get();
+    var artworkData = artworkSnap.exists ? artworkSnap.data() : null;
+    await artworkRef.delete();
+    if(artworkData && artworkData.storagePath){
+      try { await storage.ref(artworkData.storagePath).delete(); } catch(storageError) { console.warn("이미지 파일 삭제 생략:", storageError); }
+    }
+    if(document.getElementById("screen-gallery").classList.contains("active")){
+      await renderGallery("gallery-scroll", classNum);
+    } else {
+      await renderGallery("archive-gallery-scroll", classNum);
+    }
+  } catch(e) {
+    console.error(e);
+    alert("작품 삭제에 실패했습니다: " + e.message);
+  }
+}
+
+function initGallerySite(){
+  "use strict";
+
+  var current = { classNum:null, number:null, name:null, imageData:null, imageFile:null };
+
+  var fileInput = document.getElementById("fileInput");
+  var uploadBox = document.getElementById("upload-box");
+  var textarea = document.getElementById("input-desc");
+
+  function resetUploadForm(){
+    current.imageData = null;
+    current.imageFile = null;
+    fileInput.value = "";
+    uploadBox.innerHTML = '<button type="button" class="upload-plus" id="btn-upload-plus">+</button>';
+    textarea.value = "";
+    document.getElementById("desc-counter").textContent = "작성한 문장 수: 0";
+  }
+
+  document.querySelectorAll("[data-goto]").forEach(function(btn){
+    btn.addEventListener("click", function(){ showScreen(btn.getAttribute("data-goto")); });
+  });
+
+  // 교사용 반 선택 버튼 전체 이벤트 연결
+  document.querySelectorAll(".btn-class-select").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var classNum = this.getAttribute("data-class");
+      openArchiveClass(classNum);
+    });
+  });
+
+  document.getElementById("btn-start").addEventListener("click", function(){
+    document.getElementById("input-class").value = "";
+    document.getElementById("input-number").value = "";
+    document.getElementById("input-name").value = "";
+    resetUploadForm();
+    showScreen("screen-info");
+  });
+
+  document.getElementById("link-archive").addEventListener("click", function(e){
+    e.preventDefault();
+    showScreen("screen-archive");
+  });
+
+  document.getElementById("btn-goto-upload").addEventListener("click", function(){
+    var c = document.getElementById("input-class").value;
+    var n = document.getElementById("input-number").value.trim();
+    var name = document.getElementById("input-name").value.trim();
+
+    if(!c || !n || !name){ alert("정보를 모두 입력해주세요."); return; }
+
+    current.classNum = String(c);
+    current.number = parseInt(n, 10);
+    current.name = name;
+    resetUploadForm();
+    document.getElementById("upload-heading").textContent = c + "반 " + n + "번 " + name + " 큐레이터";
+    showScreen("screen-upload");
+  });
+
+  uploadBox.addEventListener("click", function(){ fileInput.click(); });
+
+  function compressImage(file, callback){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var canvas = document.createElement("canvas");
+        var max_size = 700;
+        var width = img.width;
+        var height = img.height;
+
+        if (width > height) {
+          if (width > max_size) { height *= max_size / width; width = max_size; }
+        } else {
+          if (height > max_size) { width *= max_size / height; height = max_size; }
+        }
+        canvas.width = Math.round(width);
+        canvas.height = Math.round(height);
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        callback(canvas.toDataURL("image/jpeg", 0.55));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener("change", function(){
+    var file = fileInput.files[0];
+    if(!file) return;
+    current.imageFile = file;
+    compressImage(file, function(compressedUrl){
+      current.imageData = compressedUrl;
+      uploadBox.innerHTML = '<img src="' + compressedUrl + '">';
+    });
+  });
+
+  function countSentences(text){
+    var trimmed = text.trim();
+    if(!trimmed) return 0;
+    var matches = trimmed.match(/[^.!?\n]+[.!?]?/g);
+    return matches ? matches.length : 0;
+  }
+
+  textarea.addEventListener("input", function(){
+    document.getElementById("desc-counter").textContent = "작성한 문장 수: " + countSentences(textarea.value);
+  });
+
+  document.getElementById("btn-save").addEventListener("click", async function(){
+    if(!current.imageFile){ alert("이미지를 올려주세요."); return; }
+    if(!textarea.value.trim()){ alert("설명을 작성해주세요."); return; }
+
+    var btn = document.getElementById("btn-save");
+    btn.disabled = true;
+    btn.textContent = "이미지 업로드 중...";
+
+    try {
+      var safeName = current.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      var storagePath = "artworks/" + String(current.classNum) + "/" + Date.now() + "_" + safeName;
+      var storageRef = storage.ref(storagePath);
+      await storageRef.put(current.imageFile);
+      var imageUrl = await storageRef.getDownloadURL();
+
+      btn.textContent = "작품 정보 저장 중...";
+      await db.collection("artworks").add({
+        classNum: String(current.classNum),
+        number: current.number,
+        name: current.name,
+        imageUrl: imageUrl,
+        storagePath: storagePath,
+        desc: textarea.value.trim(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      activeViewClass = current.classNum;
+      await renderGallery("gallery-scroll", current.classNum);
+      document.getElementById("gallery-title").textContent = current.classNum + "반 전시관";
+      showScreen("screen-gallery");
+      resetUploadForm();
+    } catch(e) {
+      console.error(e);
+      alert("저장에 실패했습니다. Firebase 설정 코드가 정확한지, Firestore 규칙이 허용하는지 확인해 주세요.\n\n오류: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "저장";
+    }
+  });
+
+  async function clearClassData(classNum, containerId){
+    if(!classNum) return;
+    if(!confirm(classNum + "반의 모든 작품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+    try {
+      var snap = await db.collection("artworks").where("classNum", "==", String(classNum)).get();
+      var batch = db.batch();
+      var deleteFilePromises = [];
+      snap.forEach(function(doc){
+        var data = doc.data();
+        batch.delete(doc.ref);
+        if(data.storagePath){
+          deleteFilePromises.push(storage.ref(data.storagePath).delete().catch(function(err){
+            console.warn("이미지 파일 삭제 생략:", err);
+          }));
+        }
+      });
+      await batch.commit();
+      await Promise.all(deleteFilePromises);
+      await renderGallery(containerId, classNum);
+    } catch(e) {
+      console.error(e);
+      alert("반 전체 삭제에 실패했습니다: " + e.message);
+    }
+  }
+
+  document.getElementById("btn-clear-current").addEventListener("click", function(){
+    clearClassData(activeViewClass, "gallery-scroll");
+  });
+
+  document.getElementById("btn-clear-archive").addEventListener("click", function(){
+    clearClassData(activeViewClass, "archive-gallery-scroll");
+  });
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", initGallerySite);
+} else {
+  initGallerySite();
+}
+</script>
+</body>
+</html>
